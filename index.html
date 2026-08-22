@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aljalury Apps - Workspace</title>
+    
+    <!-- Favicon Kustom Huruf "A" Elegan (Gradient Blue-Violet) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%233b82f6'/><stop offset='100%' stop-color='%238b5cf6'/></linearGradient></defs><rect width='100' height='100' rx='25' fill='url(%23g)'/><text x='50' y='73' font-family='system-ui, -apple-system, sans-serif' font-size='65' font-weight='800' fill='white' text-anchor='middle'>A</text></svg>">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts: Plus Jakarta Sans (UI) & Share Tech Mono (Digital Clock) -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        digital: ['Share Tech Mono', 'monospace'],
+                    },
+                    animation: {
+                        'blob': 'blob 15s infinite alternate',
+                        'levitate': 'levitate 6s ease-in-out infinite',
+                        'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1) rotate(0deg)' },
+                            '50%': { transform: 'translate(40px, -50px) scale(1.1) rotate(90deg)' },
+                            '100%': { transform: 'translate(-30px, 20px) scale(0.9) rotate(180deg)' },
+                        },
+                        levitate: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-8px)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px) scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f0f4f8;
+            overflow: hidden; 
+            height: 100dvh; 
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .mesh-bg {
+            position: absolute;
+            inset: 0;
+            z-index: -2;
+            background: 
+                radial-gradient(circle at 15% 50%, rgba(120, 119, 198, 0.15), transparent 40%),
+                radial-gradient(circle at 85% 30%, rgba(74, 173, 214, 0.15), transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(228, 146, 172, 0.15), transparent 40%);
+            filter: blur(40px);
+            animation: pulse-slow 8s infinite alternate;
+        }
+
+        .app-item { transition: all 0.3s ease; }
+        
+        .app-icon-wrapper {
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.4);
+        }
+        
+        .app-item:hover .app-icon-wrapper { transform: scale(1.15) translateY(-8px); }
+
+        .app-item:hover .glow-effect {
+            opacity: 0.6;
+            transform: scale(1.2) translateY(10px);
+            filter: blur(15px);
+        }
+
+        .glow-effect {
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+        
+        .app-text {
+            text-shadow: 0 2px 4px rgba(255,255,255,0.8);
+            transition: all 0.3s ease;
+        }
+        
+        .app-item:hover .app-text {
+            color: #0f172a; 
+            font-weight: 700;
+        }
+
+        .delete-badge {
+            transform: scale(0) rotate(-45deg);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .app-item:hover .delete-badge {
+            transform: scale(1) rotate(0);
+            opacity: 1;
+        }
+
+        .clock-glass {
+            background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.3) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.7);
+            box-shadow: 0 4px 20px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        .apps-container {
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+        }
+        .apps-container::-webkit-scrollbar { display: none; }
+        
+        .modal-scroll::-webkit-scrollbar { width: 6px; }
+        .modal-scroll::-webkit-scrollbar-track { background: transparent; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .modal-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .tick-colon {
+            animation: pulse-slow 1s infinite;
+            opacity: 0.4;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900">
+
+    <!-- Latar Belakang -->
+    <div class="mesh-bg"></div>
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-400 rounded-full mix-blend-multiply filter blur-[80px] opacity-30 animate-blob"></div>
+        <div class="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-400 rounded-full mix-blend-multiply filter blur-[80px] opacity-30 animate-blob" style="animation-delay: -5s;"></div>
+        <div class="absolute bottom-[-20%] left-[20%] w-[50%] h-[50%] bg-pink-400 rounded-full mix-blend-multiply filter blur-[80px] opacity-20 animate-blob" style="animation-delay: -10s;"></div>
+    </div>
+
+    <!-- Top Navigation -->
+    <nav class="w-full px-6 py-6 flex justify-between items-center z-40 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-white/60 backdrop-blur-md border border-white text-slate-800 flex items-center justify-center shadow-sm">
+                <!-- Ikon Navbar (Bisa juga disamakan dengan Favicon, tapi fontawesome juga bagus) -->
+                <i class="fa-solid fa-shapes text-lg"></i>
+            </div>
+            <span class="font-bold text-xl tracking-tight text-slate-800 drop-shadow-sm">Aljalury Apps</span>
+        </div>
+        
+        <button onclick="openAddModal()" class="group flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 rounded-full shadow-lg shadow-slate-900/20 transition-all text-white text-sm font-semibold">
+            <i class="fa-solid fa-plus group-hover:rotate-90 transition-transform duration-300"></i>
+            <span class="hidden sm:inline">Tambah Baru</span>
+        </button>
+    </nav>
+
+    <!-- Konten Utama -->
+    <main class="flex-1 flex flex-col items-center w-full max-w-7xl mx-auto px-4 sm:px-8 pt-2 pb-10 overflow-hidden">
+        
+        <!-- CENTERPIECE: Jam & Tanggal -->
+        <div class="clock-glass w-full max-w-[440px] px-6 py-4 rounded-[2rem] mb-10 shrink-0 animate-fade-in-up transition-transform hover:scale-[1.02] duration-500 cursor-default flex items-center justify-between shadow-sm border border-white/80">
+            
+            <div class="flex flex-col">
+                <span id="greeting" class="text-blue-600 font-bold tracking-widest uppercase text-[10px] sm:text-xs flex items-center gap-1.5 whitespace-nowrap mb-0.5">
+                    <i class="fa-regular fa-sun" id="greet-icon"></i> Pagi,
+                </span>
+                <span class="text-slate-800 font-bold text-sm">Aljalury</span>
+            </div>
+            
+            <div class="w-px h-8 bg-slate-300/60"></div>
+            
+            <div class="flex items-baseline text-slate-900 font-digital tracking-tight drop-shadow-sm pt-1">
+                <span id="clock-hm" class="text-3xl sm:text-4xl font-bold leading-none">00:00</span>
+                <span id="clock-s" class="text-base sm:text-lg text-slate-500 ml-1">41</span>
+            </div>
+            
+            <div class="w-px h-8 bg-slate-300/60"></div>
+            
+            <div class="flex flex-col items-end">
+                <span id="date-day" class="text-slate-400 font-bold uppercase text-[10px] sm:text-xs tracking-wider mb-0.5">Sabtu</span>
+                <span id="date-full" class="text-slate-700 text-xs sm:text-sm font-semibold tracking-wide whitespace-nowrap">
+                    22 Ags 2026
+                </span>
+            </div>
+
+        </div>
+
+        <!-- APP GRID -->
+        <div class="apps-container w-full max-w-5xl flex-1 px-4">
+            <div id="appsGrid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-x-4 gap-y-10 sm:gap-x-8 sm:gap-y-12 justify-items-center pt-2 pb-20">
+                <!-- Aplikasi dirender di sini -->
+            </div>
+
+            <div id="emptyState" class="hidden flex-col items-center justify-center py-10 w-full col-span-full">
+                <div class="w-16 h-16 bg-white/40 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 text-slate-400 text-2xl border border-white">
+                    <i class="fa-solid fa-ghost"></i>
+                </div>
+                <p class="text-slate-500 font-medium">Belum ada aplikasi yang ditambahkan.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL TAMBAH APLIKASI -->
+    <div id="appModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-md transition-opacity" onclick="closeAddModal()"></div>
+        
+        <div class="relative bg-white/95 backdrop-blur-2xl rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-md max-h-[90vh] flex flex-col border border-white z-10 transform scale-100 transition-transform">
+            
+            <div class="px-8 py-5 flex justify-between items-center border-b border-slate-100 shrink-0">
+                <h3 class="text-xl font-bold text-slate-900 tracking-tight">Aplikasi Baru</h3>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="addAppForm" onsubmit="handleFormSubmit(event)" class="px-8 py-6 space-y-7 overflow-y-auto modal-scroll">
+                
+                <div class="space-y-6">
+                    <div class="relative">
+                        <input type="text" name="appName" id="appName" required placeholder=" " 
+                            class="peer w-full border-b-2 border-slate-200 bg-transparent px-0 py-2 text-lg text-slate-900 focus:border-blue-600 outline-none transition-colors placeholder-transparent font-medium">
+                        <label class="absolute left-0 -top-3.5 text-xs font-bold uppercase tracking-wider text-slate-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-400 peer-placeholder-shown:top-2 peer-placeholder-shown:font-medium peer-placeholder-shown:normal-case peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-blue-600 peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wider pointer-events-none">Nama Aplikasi</label>
+                    </div>
+                    
+                    <div class="relative">
+                        <input type="url" name="appUrl" id="appUrl" required placeholder=" " 
+                            class="peer w-full border-b-2 border-slate-200 bg-transparent px-0 py-2 text-base text-slate-900 focus:border-blue-600 outline-none transition-colors placeholder-transparent">
+                        <label class="absolute left-0 -top-3.5 text-xs font-bold uppercase tracking-wider text-slate-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-400 peer-placeholder-shown:top-2 peer-placeholder-shown:font-medium peer-placeholder-shown:normal-case peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-blue-600 peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wider pointer-events-none">URL Tautan Utama</label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Pilih Ikon</label>
+                    <div class="grid grid-cols-6 gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                        <label class="cursor-pointer group relative flex items-center justify-center p-2 rounded-xl transition-all">
+                            <input type="radio" name="appIcon" value="fa-solid fa-globe" class="peer sr-only" checked>
+                            <i class="fa-solid fa-globe text-slate-400 peer-checked:text-blue-600 text-xl z-10 transition-colors"></i>
+                            <div class="absolute inset-0 rounded-xl bg-transparent peer-checked:bg-white peer-checked:shadow-sm border border-transparent peer-checked:border-slate-200 transition-all"></div>
+                        </label>
+                        <label class="cursor-pointer group relative flex items-center justify-center p-2 rounded-xl transition-all">
+                            <input type="radio" name="appIcon" value="fa-solid fa-robot" class="peer sr-only">
+                            <i class="fa-solid fa-robot text-slate-400 peer-checked:text-blue-600 text-xl z-10 transition-colors"></i>
+                            <div class="absolute inset-0 rounded-xl bg-transparent peer-checked:bg-white peer-checked:shadow-sm border border-transparent peer-checked:border-slate-200 transition-all"></div>
+                        </label>
+                        <label class="cursor-pointer group relative flex items-center justify-center p-2 rounded-xl transition-all">
+                            <input type="radio" name="appIcon" value="fa-solid fa-envelope" class="peer sr-only">
+                            <i class="fa-solid fa-envelope text-slate-400 peer-checked:text-blue-600 text-xl z-10 transition-colors"></i>
+                            <div class="absolute inset-0 rounded-xl bg-transparent peer-checked:bg-white peer-checked:shadow-sm border border-transparent peer-checked:border-slate-200 transition-all"></div>
+                        </label>
+                        <label class="cursor-pointer group relative flex items-center justify-center p-2 rounded-xl transition-all">
+                            <input type="radio" name="appIcon" value="fa-solid fa-gamepad" class="peer sr-only">
+                            <i class="fa-solid fa-gamepad text-slate-400 peer-checked:text-blue-600 text-xl z-10 transition-colors"></i>
+                            <div class="absolute inset-0 rounded-xl bg-transparent peer-checked:bg-white peer-checked:shadow-sm border border-transparent peer-checked:border-slate-200 transition-all"></div>
+                        </label>
+                        <label class="cursor-pointer group relative flex items-center justify-center p-2 rounded-xl transition-all">
+                            <input type="radio" name="appIcon" value="fa-solid fa-book" class="peer sr-only">
+                            <i class="fa-solid fa-book text-slate-400 peer-checked:text-blue-600 text-xl z-10 transition-colors"></i>
+                            <div class="absolute inset-0 rounded-xl bg-transparent peer-checked:bg-white peer-checked:shadow-sm border border-transparent peer-checked:border-slate-200 transition-all"></div>
+                        </label>
+                        <label class="cursor-pointer group relative flex items-center justify-center p-2 rounded-xl transition-all">
+                            <input type="radio" name="appIcon" value="fa-solid fa-play" class="peer sr-only">
+                            <i class="fa-solid fa-play text-slate-400 peer-checked:text-blue-600 text-xl z-10 transition-colors"></i>
+                            <div class="absolute inset-0 rounded-xl bg-transparent peer-checked:bg-white peer-checked:shadow-sm border border-transparent peer-checked:border-slate-200 transition-all"></div>
+                        </label>
+                        <label class="cursor-pointer group relative flex items-center justify-center p-2 rounded-xl transition-all">
+                            <input type="radio" name="appIcon" value="fa-solid fa-music" class="peer sr-only">
+                            <i class="fa-solid fa-music text-slate-400 peer-checked:text-blue-600 text-xl z-10 transition-colors"></i>
+                            <div class="absolute inset-0 rounded-xl bg-transparent peer-checked:bg-white peer-checked:shadow-sm border border-transparent peer-checked:border-slate-200 transition-all"></div>
+                        </label>
+                        <label class="cursor-pointer group relative flex items-center justify-center p-2 rounded-xl transition-all">
+                            <input type="radio" name="appIcon" value="fa-solid fa-briefcase" class="peer sr-only">
+                            <i class="fa-solid fa-briefcase text-slate-400 peer-checked:text-blue-600 text-xl z-10 transition-colors"></i>
+                            <div class="absolute inset-0 rounded-xl bg-transparent peer-checked:bg-white peer-checked:shadow-sm border border-transparent peer-checked:border-slate-200 transition-all"></div>
+                        </label>
+                        <label class="cursor-pointer group relative flex items-center justify-center p-2 rounded-xl transition-all">
+                            <input type="radio" name="appIcon" value="fa-solid fa-cart-shopping" class="peer sr-only">
+                            <i class="fa-solid fa-cart-shopping text-slate-400 peer-checked:text-blue-600 text-xl z-10 transition-colors"></i>
+                            <div class="absolute inset-0 rounded-xl bg-transparent peer-checked:bg-white peer-checked:shadow-sm border border-transparent peer-checked:border-slate-200 transition-all"></div>
+                        </label>
+                        <label class="cursor-pointer group relative flex items-center justify-center p-2 rounded-xl transition-all">
+                            <input type="radio" name="appIcon" value="fa-solid fa-camera" class="peer sr-only">
+                            <i class="fa-solid fa-camera text-slate-400 peer-checked:text-blue-600 text-xl z-10 transition-colors"></i>
+                            <div class="absolute inset-0 rounded-xl bg-transparent peer-checked:bg-white peer-checked:shadow-sm border border-transparent peer-checked:border-slate-200 transition-all"></div>
+                        </label>
+                        <label class="cursor-pointer group relative flex items-center justify-center p-2 rounded-xl transition-all">
+                            <input type="radio" name="appIcon" value="fa-solid fa-folder-open" class="peer sr-only">
+                            <i class="fa-solid fa-folder-open text-slate-400 peer-checked:text-blue-600 text-xl z-10 transition-colors"></i>
+                            <div class="absolute inset-0 rounded-xl bg-transparent peer-checked:bg-white peer-checked:shadow-sm border border-transparent peer-checked:border-slate-200 transition-all"></div>
+                        </label>
+                        <label class="cursor-pointer group relative flex items-center justify-center p-2 rounded-xl transition-all">
+                            <input type="radio" name="appIcon" value="fa-solid fa-code" class="peer sr-only">
+                            <i class="fa-solid fa-code text-slate-400 peer-checked:text-blue-600 text-xl z-10 transition-colors"></i>
+                            <div class="absolute inset-0 rounded-xl bg-transparent peer-checked:bg-white peer-checked:shadow-sm border border-transparent peer-checked:border-slate-200 transition-all"></div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Palet Warna Ikon</label>
+                    <div class="flex flex-wrap gap-2.5">
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-blue-500 to-cyan-400" class="peer sr-only" checked>
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 ring-2 ring-offset-2 ring-transparent peer-checked:ring-blue-500 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-sky-400 to-blue-500" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-sky-400 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-indigo-500 to-purple-600" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 ring-2 ring-offset-2 ring-transparent peer-checked:ring-indigo-500 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-violet-500 to-fuchsia-500" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-violet-500 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-fuchsia-500 to-pink-600" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-fuchsia-500 to-pink-600 ring-2 ring-offset-2 ring-transparent peer-checked:ring-fuchsia-500 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-rose-400 to-pink-500" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-pink-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-rose-400 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-red-500 to-rose-600" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-rose-600 ring-2 ring-offset-2 ring-transparent peer-checked:ring-red-500 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-amber-400 to-orange-500" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-amber-500 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-yellow-300 to-amber-400" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-300 to-amber-400 ring-2 ring-offset-2 ring-transparent peer-checked:ring-yellow-400 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-lime-400 to-green-500" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-lime-400 to-green-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-lime-500 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-emerald-400 to-teal-500" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-emerald-500 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-blue-900 to-slate-900" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-900 to-slate-900 ring-2 ring-offset-2 ring-transparent peer-checked:ring-slate-900 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-slate-700 to-slate-900" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 ring-2 ring-offset-2 ring-transparent peer-checked:ring-slate-700 transition-all shadow-sm"></div>
+                        </label>
+                        <label class="cursor-pointer hover:scale-110 transition-transform">
+                            <input type="radio" name="appColor" value="from-zinc-400 to-stone-500" class="peer sr-only">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-zinc-400 to-stone-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-zinc-400 transition-all shadow-sm"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Atau Pakai Gambar Sendiri (URL)</label>
+                    <input type="url" name="appImageUrl" id="appImageUrl" placeholder="https://contoh.com/logo.png" 
+                        class="w-full border-b-2 border-slate-200 bg-transparent px-0 py-2 text-sm text-slate-900 focus:border-blue-600 outline-none transition-colors">
+                    <p class="text-[10px] text-slate-400 mt-1">Kosongkan ini jika ingin menggunakan ikon bawaan. Latar warna di atas tetap akan diterapkan.</p>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-blue-600 transition-all shadow-[0_10px_20px_-10px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_20px_-10px_rgba(37,99,235,0.5)] text-sm tracking-wide">
+                        TAMBAHKAN APLIKASI
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 transform translate-y-20 opacity-0 transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) z-50 flex items-center gap-3 bg-slate-900/90 backdrop-blur-xl border border-slate-700 text-white px-6 py-3.5 rounded-full shadow-2xl pointer-events-none">
+        <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs border border-emerald-500/30">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <span id="toastMsg" class="font-medium text-sm tracking-wide">Berhasil!</span>
+    </div>
+
+    <script>
+        // Logika Waktu
+        function updateDateTime() {
+            const now = new Date();
+            
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            
+            const hariList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const bulanSingkat = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+            
+            document.getElementById('clock-hm').innerHTML = `${hours}<span class="tick-colon text-slate-300">:</span>${minutes}`;
+            document.getElementById('clock-s').textContent = seconds;
+            
+            document.getElementById('date-day').textContent = hariList[now.getDay()];
+            document.getElementById('date-full').textContent = `${now.getDate()} ${bulanSingkat[now.getMonth()]} ${now.getFullYear()}`;
+
+            let sapaan = 'Malam';
+            let iconSapaan = 'fa-moon';
+            if (now.getHours() >= 5 && now.getHours() < 11) { sapaan = 'Pagi'; iconSapaan = 'fa-sun'; }
+            else if (now.getHours() >= 11 && now.getHours() < 15) { sapaan = 'Siang'; iconSapaan = 'fa-sun'; }
+            else if (now.getHours() >= 15 && now.getHours() < 18) { sapaan = 'Sore'; iconSapaan = 'fa-cloud-sun'; }
+            
+            document.getElementById('greeting').innerHTML = `<i class="fa-solid ${iconSapaan} text-blue-500"></i> ${sapaan},`;
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        let myApps = [
+            { id: 1, name: "Workspace", url: "https://workspace.google.com", icon: "fa-solid fa-globe", color: "from-blue-500 to-cyan-400" },
+            { id: 2, name: "ChatGPT", url: "https://chat.openai.com", icon: "fa-solid fa-robot", color: "from-emerald-400 to-teal-500" },
+            { id: 3, name: "Figma", url: "https://figma.com", icon: "fa-solid fa-camera", color: "from-rose-400 to-pink-500" },
+            { id: 4, name: "GitHub", url: "https://github.com", icon: "fa-solid fa-code", color: "from-slate-700 to-slate-900" },
+            { id: 5, name: "Trello", url: "https://trello.com", icon: "fa-solid fa-briefcase", color: "from-indigo-500 to-purple-600" },
+            { id: 6, name: "YouTube", url: "https://youtube.com", icon: "fa-solid fa-play", color: "from-red-500 to-rose-600" },
+        ];
+
+        const appsGrid = document.getElementById('appsGrid');
+        const emptyState = document.getElementById('emptyState');
+
+        function renderApps(appsToRender) {
+            appsGrid.innerHTML = ''; 
+
+            if (appsToRender.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+
+                appsToRender.forEach((app, index) => {
+                    const delay = index * 40; 
+                    const levitateDelay = (Math.random() * 2).toFixed(2);
+                    
+                    const card = document.createElement('div');
+                    card.className = "app-item group relative flex flex-col items-center cursor-pointer w-full max-w-[85px] animate-fade-in-up animate-levitate";
+                    card.style.animationDelay = `${delay}ms, ${levitateDelay}s`;
+                    
+                    card.onclick = (e) => {
+                        if(!e.target.closest('.delete-btn')) window.open(app.url, '_blank');
+                    };
+                    
+                    let iconContent = '';
+                    if (app.imageUrl && app.imageUrl.trim() !== '') {
+                        iconContent = `<img src="${app.imageUrl}" alt="Ikon" class="w-10 h-10 object-contain drop-shadow-md z-10" onerror="this.style.display='none';">`;
+                    } else {
+                        iconContent = `<i class="${app.icon} drop-shadow-md"></i>`;
+                    }
+                    
+                    card.innerHTML = `
+                        <div class="relative w-16 h-16 sm:w-[5rem] sm:h-[5rem] mb-3">
+                            <div class="glow-effect bg-gradient-to-br ${app.color}"></div>
+                            <div class="app-icon-wrapper absolute inset-0 rounded-[1.3rem] sm:rounded-[1.6rem] bg-gradient-to-br ${app.color} flex items-center justify-center text-white text-2xl sm:text-3xl border border-white/20 overflow-hidden">
+                                ${iconContent}
+                            </div>
+                            <button onclick="event.stopPropagation(); deleteApp(${app.id})" class="delete-btn delete-badge absolute -top-2 -right-2 w-7 h-7 bg-white/95 backdrop-blur-md text-red-500 rounded-full flex items-center justify-center shadow-md border border-slate-100 hover:bg-red-500 hover:text-white transition-colors z-10" title="Hapus Aplikasi">
+                                <i class="fa-solid fa-minus text-sm"></i>
+                            </button>
+                        </div>
+                        <span class="app-text text-[11px] sm:text-[13px] font-medium text-slate-600 text-center w-[130%] truncate px-1">
+                            ${app.name}
+                        </span>
+                    `;
+                    appsGrid.appendChild(card);
+                });
+            }
+        }
+
+        const addModal = document.getElementById('appModal');
+        const form = document.getElementById('addAppForm');
+
+        function openAddModal() {
+            addModal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('appName').focus(), 100);
+        }
+
+        function closeAddModal() {
+            addModal.classList.add('hidden');
+            form.reset();
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            
+            const newApp = {
+                id: Date.now(),
+                name: formData.get('appName'),
+                url: formData.get('appUrl'),
+                icon: formData.get('appIcon'),
+                color: formData.get('appColor'),
+                imageUrl: formData.get('appImageUrl')
+            };
+
+            myApps.push(newApp); 
+            renderApps(myApps);
+            closeAddModal();
+            showToast("Aplikasi baru ditambahkan");
+        }
+
+        function deleteApp(id) {
+            myApps = myApps.filter(app => app.id !== id);
+            renderApps(myApps);
+            showToast("Aplikasi berhasil dihapus");
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = message;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('-translate-y-6', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('-translate-y-6', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        renderApps(myApps);
+    </script>
+</body>
+</html>
